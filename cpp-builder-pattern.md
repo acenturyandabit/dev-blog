@@ -1,8 +1,17 @@
 # C++: Minimising repetition in the builder pattern
 
-In C++, the builder pattern can help you construct objects that cannot be easily default-constructed and have lots of arguments with defaults during testing. We can use type traits and tuples to reduce repetition in the builder pattern.
+In C++, the builder pattern can help you construct objects that cannot be easily
+default-constructed and have lots of arguments with defaults during testing. We
+can use type traits and tuples to reduce repetition in the builder pattern.
 
-Let's look at a toy example: we're going to make some soup.
+## Builder patterns 101: Soup editon
+
+The language agnostic builder pattern has been covered before
+[quite a](https://refactoring.guru/design-patterns/builder/cpp/example)
+[few times](https://www.geeksforgeeks.org/builder-pattern-c-design-patterns/),
+[including in C++](https://medium.com/@antwang/builder-pattern-in-c-the-right-way-e943abbe0d2d);
+and even though we're going beyond that today, let's start by looking at a toy
+example: we're going to make some soup.
 
 ```c++
 #include <string>
@@ -36,7 +45,13 @@ Soup soup{10, "miso", 100}; // ok
 // Soup soup{"miso"}; // Not ok, we need to provide all three arguments
 ```
 
-So here is some soup. The soup has three arguments, and you must specify all three arguments in order to construct the soup. Even though we have some default values, we can't pick and chose between them easily: We could try and specify them in order in the ctor as default valued arguments, but then we can only omit arguments starting from the right; alternatively, we could provide a default constructor and setter methods, but we might want some of our members to be read-only, in which case setters would not be allowed.
+So here is some soup. The soup has three arguments, and you must specify all
+three arguments in order to construct the soup. Even though we have some default
+values, we can't pick and chose between them easily: we could try and specify
+them in order in the ctor as default valued arguments, but then we can only omit
+arguments starting from the right; alternatively, we could provide a default
+constructor and setter methods, but we might want some of our members to be
+read-only, in which case setters would not be allowed.
 
 So we turn to the builder pattern.
 
@@ -59,7 +74,40 @@ misoSoupBuilder.mushroomCount = 1000;
 Soup misoSoup = misoSoupBuilder.build(); // partially default soup
 ```
 
-Great! But we had to mention `misoSoupBuilder` in our code three times. A cool thing about the builder pattern is that you can create setter methods that return the builder itself, which means you can chain your builder setter methods:
+<details>
+
+<summary>Wrapped modified-default builders</summary>
+
+Suppose in one part of your code you often make miso soup; and in another part
+you often make cream-of-chicken soup. You can try and semi-specialize your builders:
+
+```c++
+// WRONG! DO NOT COPY
+SoupBuilder misoSoupBuilder = SoupBuilder{}.setBase("miso");
+SoupBuilder creamSoupBuilder = SoupBuilder{}.setBase("cream-of-chicken");
+
+misoSoupBuilder.mushroomCount = 2000;
+Soup soup1 = misoSoupBuilder.build();
+
+misoSoupBuilder.water = 1000;
+Soup soup2 = misoSoupBuilder.build();
+```
+
+The problem here is that soup2 will have 2000 mushrooms, even though we may have
+intended to have the original default of 100, because we've reused an instance of
+SoupBuilder. Instead, we need to make a SoupBuilder factory:
+
+```c++
+SoupBuilder misoSoupBuilder() { return SoupBuilder{}.setBase("miso"); };
+```
+
+and everything works perfectly fine.
+
+</details>
+
+Great! But we had to mention `misoSoupBuilder` in our code three times. A cool
+thing about the builder pattern is that you can create setter methods that
+return the builder itself, which means you can chain your builder setter methods:
 
 ```c++
 struct SoupBuilder{
@@ -97,9 +145,14 @@ Soup misoSoup = SoupBuilder{}
     .build();
 ```
 
-Yay! We don't have to repeat the name of the builder anymore! But we pay a price: each time we add a property we need to define a new setter method: three whole lines! Wouldn't it be nice if we didn't have to do that?
+Yay! We don't have to repeat the name of the builder anymore! However, we pay a
+price: each time we add a property we need to define a new setter method: three
+whole lines! Wouldn't it be nice if we didn't have to do that?
 
-We can create a `set()` method that will take an argument, check its type, then based on that type, determine the correct member to set. Here's how it works:
+## Cooking with C++17 tuples and type traits
+
+We can create a `set()` method that will take an argument, check its type, then
+based on that type, determine the correct member to set. Here's how it works:
 
 ```c++
 #include <type_traits>
@@ -143,9 +196,13 @@ Soup misoSoup = SoupBuilder{}
     .build();
 ```
 
-Nice. Now we only need two lines per new property. But we have a problem: What if we have two int-members? Or even worse, what if we try to `set(100)` mushrooms but end up setting water instead?
+Nice. Now we only need two lines per new property. But we have a problem: What if
+we have two int-members? Or even worse, what if we try to `set(100)` mushrooms,
+but end up setting water instead?
 
-For this, we can use strong types [FluentCPP - awesome C++ blog!](https://www.fluentcpp.com/2016/12/08/strong-types-for-strong-interfaces/) to define exactly which property we're setting, and as a bonus, get stronger interfaces.
+For this, we can use strong types
+[FluentCPP - awesome C++ blog!](https://www.fluentcpp.com/2016/12/08/strong-types-for-strong-interfaces/)
+to define exactly which property we're setting, and as a bonus, get stronger interfaces.
 
 ```c++
 
@@ -187,9 +244,13 @@ Soup misoSoup = SoupBuilder{}
     .build();
 ```
 
-Now we see that for the types we've decided to make into strong types, the name of the parameter appears at the call site, which means we can clearly see what is going on and avoid implicit type conversions. Hooray!
+Now we see that for the types we've decided to make into strong types, the name
+of the parameter appears at the call site, which means we can clearly see what
+is going on and avoid implicit type conversions. Hooray!
 
-While I'm a pretty big fan of strong types, this isn't a strong type post - it's a repetition minimisation post; and we are still repeating a bunch of `if constexpr` for each parameter. Let's see if tuples will help us here...
+While I'm a pretty big fan of strong types, this isn't a strong type post -
+it's a repetition minimisation post; and we are still repeating a bunch of
+`if constexpr` for each parameter. Let's see if tuples will help us here...
 
 ```c++
 #include <tuple>
@@ -240,6 +301,9 @@ private:
 };
 ```
 
-Fantastic! Now we can just add our parameters to the `std::tie()` and we automatically get a setter!
+Fantastic! Now we can just add our parameters to the `std::tie()` and we
+automatically get a setter!
 
-If you've read through this blog and you effortlessly understand everything that is going on here, then congratulations - you've probably got a decent amount of experience with `std::tuple`, template classes, references, and more :)
+If you've read through this blog and you effortlessly understand everything that
+is going on here, then congratulations - you've probably got a decent amount of
+experience with `std::tuple`, template classes, references, and more :)

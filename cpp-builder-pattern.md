@@ -218,11 +218,11 @@ we have two int-members? Or even worse, what if we try to `set(100)` mushrooms,
 but end up setting water instead?
 
 For this, we can use strong types
-[FluentCPP - awesome C++ blog!](https://www.fluentcpp.com/2016/12/08/strong-types-for-strong-interfaces/)
+(Check out [FluentCPP - an awesome C++ blog!](https://www.fluentcpp.com/2016/12/08/strong-types-for-strong-interfaces/))
 to define exactly which property we're setting, and as a bonus, get stronger interfaces.
 
 <details>
-<summary>A caveat about the 'nice' compile time error</summary>
+<summary>A caveat about the compile time error</summary>
 
 The compile time error produced by using a wrong type in our builder is
 `Static assertion failed due to requirement 'always_false<double>::value'`

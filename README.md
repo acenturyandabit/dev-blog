@@ -8,12 +8,13 @@ I write about my work and my opinions on software development; and I read and an
 <details>
 <summary>Git tricks series</summary>
 
-[Git tricks 1: Gitignore a whole folder with no side effects](./git-tricks-1-gitignore.md)
+- [Git tricks 1: Gitignore a whole folder with no side effects](./git-tricks-1-gitignore.md)
 </details>
 <details>
 <summary>C++</summary>
 
-[C++: Overoptimizing the builder pattern with template metaprogramming](./cpp-builder-pattern.md)
+- FluentC++: [Strong types for strong interfaces](https://www.fluentcpp.com/2016/12/08/strong-types-for-strong-interfaces/) (and really, the rest of the blog)
+- [C++: Overoptimizing the builder pattern with template metaprogramming](./cpp-builder-pattern.md)
 </details>
 <br>
 I've got a few articles in the works, but I figured this project needs a README, so my first post is going to be about just that :)

@@ -2,7 +2,8 @@
 
 In C++, the builder pattern can help you construct objects that cannot be easily
 default-constructed and have lots of arguments with defaults during testing. We
-can use type traits and tuples to reduce repetition in the builder pattern.
+can use type traits and tuples to reduce repetition in the builder pattern...
+but just because we can, doesn't mean we should.
 
 ## Builder patterns 101: Soup editon
 
@@ -53,7 +54,7 @@ arguments starting from the right; alternatively, we could provide a default
 constructor and setter methods, but we might want some of our members to be
 read-only, in which case setters would not be allowed.
 
-So we turn to the builder pattern.
+Fortunately, we can fix these issues with the builder pattern!
 
 ```c++
 struct SoupBuilder {
@@ -72,6 +73,11 @@ SoupBuilder misoSoupBuilder{};
 misoSoupBuilder.base = "miso";
 misoSoupBuilder.mushroomCount = 1000;
 Soup misoSoup = misoSoupBuilder.build(); // partially default soup
+
+int main() {
+  misoSoup.enjoy();
+  return 0;
+}
 ```
 
 <details>
@@ -104,6 +110,8 @@ SoupBuilder misoSoupBuilder() { return SoupBuilder{}.setBase("miso"); };
 and everything works perfectly fine.
 
 </details>
+
+<br>
 
 Great! But we had to mention `misoSoupBuilder` in our code three times. A cool
 thing about the builder pattern is that you can create setter methods that
@@ -151,6 +159,14 @@ whole lines! Wouldn't it be nice if we didn't have to do that?
 
 ## Cooking with C++17 tuples and type traits
 
+> A good senior engineer seeing this in a code review will *probably* tell you off
+> if you actually did this, because it doesn't conform to what people expect to see
+> when they open up a class definition. There's a more developer-friendly way to
+> avoid repetition write builder classes which doesn't involve a ridiculous amount
+> of metaprogramming, which I will write about this in another blog in future.
+
+That being said, let's try to boil our code down even further with some templates.
+
 We can create a `set()` method that will take an argument, check its type, then
 based on that type, determine the correct member to set. Here's how it works:
 
@@ -174,8 +190,8 @@ struct SoupBuilder{
         } else if constexpr (std::is_same_v<ArgT, float>){
             mushroomCount_ = valueToSet;
         } else {
-            // Couldn't match a parameter
-            static_assert(always_false<ValueToSetT>::value);
+            static_assert(always_false<ValueToSetT>::value,
+                      "Could not match parameter in SoupBuilder!");
         }
         return *this;
     }
@@ -193,6 +209,7 @@ private:
 Soup misoSoup = SoupBuilder{}
     .set(std::string{"miso"}) // base
     .set(1000.0) // mushrooms
+    .set(static_cast<double>(300)) // gives a compile-time error
     .build();
 ```
 
@@ -203,6 +220,17 @@ but end up setting water instead?
 For this, we can use strong types
 [FluentCPP - awesome C++ blog!](https://www.fluentcpp.com/2016/12/08/strong-types-for-strong-interfaces/)
 to define exactly which property we're setting, and as a bonus, get stronger interfaces.
+
+<details>
+<summary>A caveat about the 'nice' compile time error</summary>
+
+The compile time error produced by using a wrong type in our builder is
+`Static assertion failed due to requirement 'always_false<double>::value'`
+`Could not match parameter in SoupBuilder!`; but it appears *at the static_assert*,
+not at the call site of the bad set() function. Even though we can chase the error's
+definition trace down to the call site, and we get the 'double' type in our assert
+message, this is obviously not ideal.
+</details>
 
 ```c++
 
@@ -242,6 +270,7 @@ Soup misoSoup = SoupBuilder{}
     .set("miso")
     .set(Mushrooms{1000})
     .build();
+
 ```
 
 Now we see that for the types we've decided to make into strong types, the name
@@ -266,8 +295,8 @@ class TrySetInTuple{
     } else if constexpr (IDX < std::tuple_size_v<TupleT> - 1) {
       recursiveTrySet<TupleT, ValueToSetT, IDX + 1>(tuple, value);
     } else {
-      static_assert(
-          always_false<ValueToSetT>::value); // Couldn't match a parameter
+        static_assert(always_false<ValueToSetT>::value,
+                      "Could not match parameter in tuple!");
     }
   };
 
@@ -304,6 +333,118 @@ private:
 Fantastic! Now we can just add our parameters to the `std::tie()` and we
 automatically get a setter!
 
-If you've read through this blog and you effortlessly understand everything that
-is going on here, then congratulations - you've probably got a decent amount of
-experience with `std::tuple`, template classes, references, and more :)
+<details>
+<summary>The compile time error is getting more abstract...</summary>
+
+Now that the static assert is not in our concrete SoupBuilder, if we try and define
+multiple setters using our TrySetInTuple, we may get even more confused.
+</details>
+
+<br>
+
+But can we do *better*? What if we created a meta builder class that allows us to
+specify all the defaults in one go in the constructor, so we don't even have to write
+the member list?
+
+First, let's quickly change our Soup class so that we define the ctor in terms of
+the strong types (which _is_ good practice); and also add a DEFAULTS tuple for
+what we want the default values of our ctor to be:
+
+```c++
+class Soup {
+public:
+  Soup(Water waterVolume, std::string_view base, Mushrooms mushroomCount)
+      : waterVolume_(waterVolume.value), base_(base),
+        mushroomCount_(mushroomCount.value) {}
+  ...
+
+  // We want these to be our default values
+  static constexpr auto DEFAULTS =
+      std::make_tuple(Water{10}, std::string_view{"miso"}, Mushrooms{100});
+private:
+  ...
+};
+```
+
+Now, for the grand finale: Here's a MetaBuilder class, where we can pass the Soup
+and get a builder for the soup, without having to write any extra builder code.
+
+```c++
+template <typename BaseT> class MetaBuilder {
+public:
+  MetaBuilder() : props_(BaseT::DEFAULTS) {}
+
+  template <typename ArgT> MetaBuilder &set(ArgT valueToSet) {
+    // props is a tuple of values; we turn it into a tuple of references
+    auto referenceProps = MakeReferenceTuple{}(props_);
+    TrySetInTuple{}(referenceProps, valueToSet);
+    return static_cast<MetaBuilder &>(*this);
+  }
+
+  auto props() { return props_; }
+
+  BaseT build() { return std::make_from_tuple<BaseT>(props()); }
+
+private:
+  // Value type to store the values of the props.
+  // Use std::decay_t to make it non-const.
+  std::decay_t<decltype(BaseT::DEFAULTS)> props_;
+
+  template <typename T> struct always_false : std::false_type {};
+
+  class TrySetInTuple {
+    template <typename TupleT, typename ValueToSetT, int IDX = 0>
+    void recursiveTrySet(TupleT &tuple, ValueToSetT &value) {
+      auto &prop = std::get<IDX>(tuple);
+      if constexpr (std::is_same_v<std::decay_t<decltype(prop)>, ValueToSetT>) {
+        prop = value;
+      } else if constexpr (IDX < std::tuple_size_v<TupleT> - 1) {
+        recursiveTrySet<TupleT, ValueToSetT, IDX + 1>(tuple, value);
+      } else {
+        static_assert(always_false<ValueToSetT>::value,
+                      "Could not match parameter in builder!");
+      }
+    };
+
+  public:
+    template <typename TupleT, typename ValueToSetT>
+    void operator()(TupleT &tuple, ValueToSetT &value) {
+      recursiveTrySet(tuple, value);
+    }
+  };
+
+  class MakeReferenceTuple {
+    template <typename TupleT, int N_EXPANDED_PARAMS = 0,
+              typename... ExpandedParams>
+    auto recursiveMakeTuple(TupleT &tuple, ExpandedParams &...references) {
+      if constexpr (N_EXPANDED_PARAMS == std::tuple_size_v<TupleT>) {
+        return std::tie(references...);
+      } else if constexpr (N_EXPANDED_PARAMS < std::tuple_size_v<TupleT>) {
+        return recursiveMakeTuple<
+            TupleT, N_EXPANDED_PARAMS + 1,
+            std::tuple_element_t<N_EXPANDED_PARAMS, TupleT>>(
+            tuple, std::get<N_EXPANDED_PARAMS>(tuple), references...);
+      } else {
+        static_assert(always_false<TupleT>::value); // Invalid index (should be
+                                                    // impossible)
+      }
+    };
+
+  public:
+    template <typename TupleT> auto operator()(TupleT &tuple) {
+      return recursiveMakeTuple(tuple);
+    }
+  };
+};
+
+// A super clean definition of the builder class.
+using SoupBuilder = MetaBuilder<Soup>;
+```
+
+Finally, we've used 67 lines of (re)cursed metaprogramming to avoid writing 12
+lines of SoupBuilder code!
+
+> If you've read through this blog and you effortlessly understand everything that
+> is going on here, then congratulations - you must have had a decent amount of
+> experience with `std::tuple`, template classes, references, and C++
+> metaprogramming :)

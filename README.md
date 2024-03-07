@@ -10,6 +10,11 @@ I write about my work and my opinions on software development; and I read and an
 
 [Git tricks 1: Gitignore a whole folder with no side effects](./git-tricks-1-gitignore.md)
 </details>
+<details>
+<summary>C++</summary>
+
+[C++: Overoptimizing the builder pattern with template metaprogramming](./cpp-builder-pattern.md)
+</details>
 <br>
 I've got a few articles in the works, but I figured this project needs a README, so my first post is going to be about just that :)
 

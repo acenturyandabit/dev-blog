@@ -1,4 +1,4 @@
-# C++: Minimising repetition in the builder pattern
+# C++: Overoptimizing the builder pattern with template metaprogramming
 
 In C++, the builder pattern can help you construct objects that cannot be easily
 default-constructed and have lots of arguments with defaults during testing. We

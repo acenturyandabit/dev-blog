@@ -16,6 +16,12 @@ I write about my work and my opinions on software development; and I read and an
 - FluentC++: [Strong types for strong interfaces](https://www.fluentcpp.com/2016/12/08/strong-types-for-strong-interfaces/) (and really, the rest of the blog)
 - [C++: Overoptimizing the builder pattern with template metaprogramming](./cpp-builder-pattern.md)
 </details>
+<details>
+<summary>Javascript</summary>
+
+- [Javascript: Benchmarking KVstore pagination algorithms](./js-kv-pagination-benchmark.md)
+</details>
+
 <br>
 I've got a few articles in the works, but I figured this project needs a README, so my first post is going to be about just that :)
 

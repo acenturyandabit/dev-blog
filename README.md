@@ -10,6 +10,7 @@ I write about my work and my opinions on software development; and I read and an
 <summary>Development day-to-day</summary>
 
 - [Multithreaded Development: Increase your productivity when you have background jobs](./multithreaded-development.md)
+- [Assistance Repositories](./assistance-repositories.md)
 
 </details>
 <details>
@@ -31,6 +32,21 @@ I write about my work and my opinions on software development; and I read and an
 - [Javascript: Benchmarking KVstore pagination algorithms](./js-kv-pagination-benchmark.md)
 
 </details>
+
+<details>
+<summary>Algorithms</summary>
+
+- Marc Brooker: [Adding randomness to load balancing makes it better](https://brooker.co.za/blog/2012/01/17/two-random.html)
+
+</details>
+
+<details>
+<summary>Thinking like a C-suite decision maker</summary>
+
+- Marc Brooker: [Questions to ask when starting out projects](https://brooker.co.za/blog/2024/03/04/mousetrap.html)
+
+</details>
+
 
 <br>
 I've got a few articles in the works, but I figured this project needs a README, so my first post is going to be about just that :)

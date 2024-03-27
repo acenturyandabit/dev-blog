@@ -16,14 +16,20 @@ I write about my work and my opinions on software development; and I read and an
 <details>
 <summary>Git tricks series</summary>
 
-- [Git tricks 1: Gitignore a whole folder with no side effects](./git-tricks-1-gitignore.md)
+- [Git tricks 1: .gitignore a whole folder with no side effects](./git-tricks-1-gitignore.md)
+- [Git tricks 2: Using git worktree to speed up multi-issue development](./git-tricks-2-git-worktree.md)
 
 </details>
+<details>
+<summary>Programming languages</summary>
+
+<div style="padding-left: 10px">
 <details>
 <summary>C++</summary>
 
 - FluentC++: [Strong types for strong interfaces](https://www.fluentcpp.com/2016/12/08/strong-types-for-strong-interfaces/) (and really, the rest of the blog)
 - [C++: Overoptimizing the builder pattern with template metaprogramming](./cpp-builder-pattern.md)
+- Mircea Baja: [Using std::tie to quickly write comparison operators for user-defined data structures](https://bajamircea.github.io/coding/cpp/2017/03/10/std-tie.html)
 
 </details>
 <details>
@@ -32,7 +38,13 @@ I write about my work and my opinions on software development; and I read and an
 - [Javascript: Benchmarking KVstore pagination algorithms](./js-kv-pagination-benchmark.md)
 
 </details>
+<details>
+<summary>Python</summary>
 
+- [Python Quirks](./python-quirks.md)
+
+</details>
+</div></details>
 <details>
 <summary>Algorithms</summary>
 
@@ -47,9 +59,20 @@ I write about my work and my opinions on software development; and I read and an
 
 </details>
 
+<details>
+<summary>Collections</summary>
+
+- [Let's Build AI](https://letsbuild.ai/)
+
+</details>
+
 
 <br>
 I've got a few articles in the works, but I figured this project needs a README, so my first post is going to be about just that :)
+
+## Kudos
+
+Thanks to our staff eng at [Company 1] for sharing their knowledge about C++ during code reviews.
 
 # Give a dev a README 🐟, or teach a dev to README 🎣?
 

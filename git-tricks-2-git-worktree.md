@@ -5,9 +5,10 @@ When a project starts out, you typically have a single instance on a single serv
 However, when things scale up, having a single point of failure is an unacceptable risk. One way to mitigate this risk is to turn your single pet instance/server into a herd of cattle instances/servers.
 
 While this is common devops knowledge, we can apply it to our development efforts as well! If we have multiple workfronts, then the classic way of managing these is to create one branch per workfront, and we can swap between workfronts by changing branches.
+
 ```bash
-$ git checkout -b workfront-1
-$ git checkout main
+git checkout -b workfront-1
+git checkout main
 ```
 
 This is ok, assuming your code doesn't produce any build time artefacts. If you're working in large C++ projects, that assumption is quite untrue - you will have build artefacts (object files) which will vary between workfronts and should not be committed to source control.
@@ -24,7 +25,8 @@ $ tree
     ├── .git
     └── some_files
 ```
-This is fine, but having two separate .git directories has two main disadvantages: Firstly, if the repository is huge, then cloning it each time wastes bandwidth, disk space and time; and secondly, your work might produce patches and stashes that you want to live on in your local .git. 
+
+This is fine, but having two separate .git directories has two main disadvantages: Firstly, if the repository is huge, then cloning it each time wastes bandwidth, disk space and time; and secondly, your work might produce patches and stashes that you want to live on in your local .git.
 
 In the ideal case, we want a single .git to store all our commits, while having multiple directories with a workfront each. Fortunately, this functionality exists in [git-worktree](https://git-scm.com/docs/git-worktree).
 
@@ -38,9 +40,13 @@ What's in this worktree? Instead of `.git` being a directory, we can `cat .git` 
 gitdir: /path/to/workspace/ticket-name/repository_name
 ```
 
-Nice, we haven't copied the whole .git directory, saving us a bunch of space and time!
+## The principles behind the advantages of using `git worktree`
 
-## That command is so tedious! Can't we do better?
+When you're working on different projects, you might use tools like `venv` or `conda` to setup different python environments for different projects, to prevent a project's dependencies from leaking into the global scope. Git worktree does a similar thing by making sure temporary files don't leak into your disk's global scope.
+
+Creating multiple worktrees means you only have one `.git` folder per repository, rather than one per repository per issue, increasing your [scalability (i.e cost per marginal issue)](https://brooker.co.za/blog/2024/01/18/scalability.html). This means commits persist between issues, allowing you to apply temporary commits useful in one place to another without using `git patch`; and you don't have to worry about losing temporary commits when you're cleaning up after an issue. One persistent `.git` folder also means you spend less time running `git clone`. If you work on issues in parallel, this can also reduce your disk usage.
+
+## But that command is so tedious! Can't we do better?
 
 Sure! Let's say we're happy to  put all of our tickets in a folder called `/path/to/workspace` (as above). Then we can make a git alias:
 
